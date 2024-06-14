@@ -8,11 +8,10 @@ from langchain_community.embeddings import GPT4AllEmbeddings
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from constants import *
-from bs4 import SoupStrainer
 from langchain_huggingface import HuggingFaceEmbeddings
 
 CHROMA_DB_DIRECTORY='db'
-DOCUMENT_SOURCE_DIRECTORY='./sources'
+DOCUMENT_SOURCE_DIRECTORY='./sources/docs'
 CHROMA_SETTINGS = Settings(
     chroma_db_impl='duckdb+parquet',
     persist_directory=CHROMA_DB_DIRECTORY,
@@ -43,7 +42,8 @@ class MyKnowledgeBase:
     def load_pdfs(self):
         loader = DirectoryLoader(
             self.pdf_source_folder_path,
-            glob="**/*.pdf"
+            glob="**/*.md",
+            show_progress=True
         )
         loaded_pdfs = loader.load()
 
@@ -73,14 +73,7 @@ class MyKnowledgeBase:
         collection.add(
             documents=[chunked_docs]
         )
-        # vector_db = Chroma(
-        #     persist_directory=CHROMA_DB_DIRECTORY,
-        #     embedding_function=embedder,
-        #     client_settings=CHROMA_SETTINGS,
-        # )
 
-        # vector_db.add_documents(chunked_docs)
-        # vector_db.persist()
         return collection
 
     def return_retriever_from_persistant_vector_db(
