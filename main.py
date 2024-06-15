@@ -7,8 +7,6 @@ from knowledgebase import (
     DOCUMENT_SOURCE_DIRECTORY
 )
 # import all the langchain modules
-from langchain.chains import retrieval_qa
-from langchain_community.embeddings import GPT4AllEmbeddings
 from langchain_huggingface import HuggingFaceEmbeddings
 from constants import *
 from langchain_core.output_parsers import StrOutputParser
