@@ -14,6 +14,10 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain import hub
 from langchain_core.runnables import RunnableParallel
+import os
+
+# Set cache directory
+os.environ["TRANSFORMERS_CACHE"] = "/app/.cache/huggingface/hub"
 
 llm = MyGPT4ALL(
     model_folder_path=GPT4ALL_MODEL_FOLDER_PATH,
@@ -62,8 +66,7 @@ def main():
         query = input("What's on your mind: ")
         if query == 'exit':
             break
-        # result = qa_chain(query)
-        # answer, docs = result['result'], result['source_documents']
+
         result = qa_chain_with_docs.invoke(query)
 
         answer, docs = result['answer'], result['context']

@@ -58,7 +58,7 @@ class MyGPT4ALL(LLM):
         self.gpt4_model_instance = GPT4All(
             model_name=self.model_name,
             model_path=self.model_folder_path,
-            # device='gpu' enable this for gpu accelaration
+            # device='gpu' # enable this for gpu accelaration
         )
 
         

@@ -89,7 +89,6 @@ class MyKnowledgeBase:
     def initiate_document_injetion_pipeline(self):
         loaded_pdfs = self.load_pdfs()
         chunked_documents = self.split_documents(loaded_docs=loaded_pdfs)
-        
         print("=> PDF loading and chunking done.")
 
         embeddings = HuggingFaceEmbeddings()
