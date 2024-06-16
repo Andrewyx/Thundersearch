@@ -1,0 +1,186 @@
+syntax = "proto3";
+
+package TbotsProto;
+
+import "proto/geometry.proto";
+import "proto/geneva_slot.proto";
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.EnumValueOptions
+{
+    optional bool dynamic = 1000;
+}
+
+enum BallCollisionType
+{
+    ALLOW = 0;
+    AVOID = 1;
+}
+
+enum ObstacleAvoidanceMode
+{
+    // The robot avoids obstacles in a safe manner
+    SAFE = 0;
+    // The robot is more aggressive in reaching its destination
+    // and may be less safe when avoiding obstacles
+    AGGRESSIVE = 1;
+}
+
+enum MotionConstraint
+{
+    // The box around the friendly goal
+    FRIENDLY_DEFENSE_AREA = 0;
+    // The box around the enemy goal
+    ENEMY_DEFENSE_AREA = 1;
+    // The inflated box around the enemy defense area
+    INFLATED_ENEMY_DEFENSE_AREA = 2;
+    // The center circle
+    CENTER_CIRCLE = 3;
+    // The enemy half of the field
+    ENEMY_HALF = 4;
+    // The friendly half of the field
+    FRIENDLY_HALF = 5;
+    // Region around the playable zone
+    AVOID_FIELD_BOUNDARY_ZONE = 6;
+    // A half meter radius around the ball
+    HALF_METER_AROUND_BALL = 7 [(dynamic) = true];
+    // Path between ball and placement point in ball placement
+    AVOID_BALL_PLACEMENT_INTERFERENCE = 8 [(dynamic) = true];
+    // The enemy half of the field without the centre circle
+    ENEMY_HALF_WITHOUT_CENTRE_CIRCLE = 9;
+    // The friendly goal
+    FRIENDLY_GOAL = 10;
+}
+
+enum DribblerMode
+{
+    OFF        = 0;
+    INDEFINITE = 1;
+    MAX_FORCE  = 2;
+}
+
+enum MaxAllowedSpeedMode
+{
+    // The physical limit of the robots
+    PHYSICAL_LIMIT = 0;
+    // Move at speed limit for the stop command
+    STOP_COMMAND = 1;
+    // Move at speed at which collisions are allowed
+    COLLISIONS_ALLOWED = 2;
+}
+
+message AutoChipOrKick
+{
+    oneof auto_chip_or_kick
+    {
+        float autokick_speed_m_per_s   = 1;
+        float autochip_distance_meters = 2;
+    };
+}
+
+// This is only used for simulation. Similar proto in power_frame_msg.proto but with pulse
+// width instead of m_per_s
+message PowerControl
+{
+    message ChickerControl
+    {
+        oneof chicker_command
+        {
+            float kick_speed_m_per_s         = 1;
+            float chip_distance_meters       = 2;
+            AutoChipOrKick auto_chip_or_kick = 3;
+        };
+    }
+
+    message GenevaControl
+    {
+        float angle_deg          = 1;
+        float rotation_speed_rpm = 2;
+    }
+
+    ChickerControl chicker  = 1;
+    Geneva.Slot geneva_slot = 2;
+}
+
+message Primitive
+{
+    reserved 5;
+    oneof primitive
+    {
+        MovePrimitive move                    = 1;
+        StopPrimitive stop                    = 2;
+        DirectControlPrimitive direct_control = 3;
+    }
+}
+
+message MovePrimitive
+{
+    // Fields deprecated after transitioning to trajectory planning
+    reserved 1, 2, 3, 4, 5, 7, 8, 9;
+
+    AutoChipOrKick auto_chip_or_kick        = 6;
+    TrajectoryPathParams2D xy_traj_params   = 10;
+    TrajectoryParamsAngular1D w_traj_params = 11;
+    DribblerMode dribbler_mode              = 12;
+}
+
+message StopPrimitive {}
+
+message TrajectoryPathParams2D
+{
+    message SubDestination
+    {
+        // Intermediate destination for the trajectory path
+        // to travel to prior to going to the destination.
+        Point sub_destination = 1;
+
+        // The time at which a new trajectory is branched
+        // off of the last trajectory in path to go towards the
+        // sub_destination.
+        float connection_time_s = 2;
+    }
+
+    Point start_position                     = 1;
+    Point destination                        = 2;
+    Vector initial_velocity                  = 3;
+    MaxAllowedSpeedMode max_speed_mode       = 4;
+    repeated SubDestination sub_destinations = 5;
+}
+
+message TrajectoryParamsAngular1D
+{
+    Angle start_angle                = 1;
+    Angle final_angle                = 2;
+    AngularVelocity initial_velocity = 3;
+}
+
+message MotorControl
+{
+    message DirectPerWheelControl
+    {
+        float front_left_wheel_velocity  = 1;
+        float back_left_wheel_velocity   = 2;
+        float front_right_wheel_velocity = 3;
+        float back_right_wheel_velocity  = 4;
+    }
+
+    message DirectVelocityControl
+    {
+        Vector velocity                  = 1;
+        AngularVelocity angular_velocity = 2;
+    }
+
+    oneof drive_control
+    {
+        DirectPerWheelControl direct_per_wheel_control = 1;
+        DirectVelocityControl direct_velocity_control  = 2;
+    }
+
+    int32 dribbler_speed_rpm = 4;
+}
+
+message DirectControlPrimitive
+{
+    MotorControl motor_control = 1;
+    PowerControl power_control = 2;
+}

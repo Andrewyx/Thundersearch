@@ -1,0 +1,22 @@
+[Unit]
+Description=thunderloop service
+
+# When systemd stops or restarts the thunderbots.service, the action is propagated to this unit
+PartOf=thunderbots.service
+
+# At startup, start this unit after the thunderbots.service start
+After=thunderbots.service network.target network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/home/robot/thunderbots_binaries/thunderloop_main
+
+# How long to wait after KillSignal (SIGTERM by default) to send FinalKillSignal (SIGKILL by default)
+TimeoutStopSec=15s
+
+# Always restart on crash
+Restart=always
+
+[Install]
+# This unit should be run at startup
+WantedBy=multi-user.target

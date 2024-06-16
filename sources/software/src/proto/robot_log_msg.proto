@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package TbotsProto;
+
+import "proto/tbots_timestamp_msg.proto";
+
+// the severity level of the log
+enum LogLevel
+{
+    DEBUG    = 0;
+    INFO     = 1;
+    WARNING  = 2;
+    FATAL    = 3;
+    CONTRACT = 4;  // Special Fatal log for if a CHECK fails
+};
+
+message RobotLog
+{
+    // the id of the robot that is logging
+    uint32 robot_id = 1;
+
+    // the timestamp of when the log was generated
+    Timestamp created_timestamp = 2;
+
+    // the severity level of the log
+    LogLevel log_level = 3;
+
+    // the line number of where the log was generated
+    uint32 line_number = 4;
+    string file_name   = 5;
+    string log_msg     = 6;
+}

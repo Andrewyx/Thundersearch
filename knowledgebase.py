@@ -2,28 +2,16 @@ import os
 from typing import Optional
 
 import chromadb
-from chromadb.config import Settings
-from langchain_community.document_loaders import DirectoryLoader, WebBaseLoader
-from langchain_community.embeddings import GPT4AllEmbeddings
+from langchain_community.document_loaders import DirectoryLoader
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from constants import *
 from langchain_huggingface import HuggingFaceEmbeddings
-
-CHROMA_DB_DIRECTORY='db'
-DOCUMENT_SOURCE_DIRECTORY='./sources/docs'
-CHROMA_SETTINGS = Settings(
-    chroma_db_impl='duckdb+parquet',
-    persist_directory=CHROMA_DB_DIRECTORY,
-    anonymized_telemetry=False
-)
-TARGET_SOURCE_CHUNKS=4
-CHUNK_SIZE=500
-CHUNK_OVERLAP=50
-HIDE_SOURCE_DOCUMENTS=False
+from langchain_community.document_loaders.generic import GenericLoader
+from langchain_community.document_loaders.parsers import LanguageParser
 
 client = chromadb.PersistentClient(
-    path=DOCUMENT_SOURCE_DIRECTORY,
+    path=CHROMA_DB_DIRECTORY,
     settings=Settings(anonymized_telemetry=False)
     )
 
@@ -40,10 +28,12 @@ class MyKnowledgeBase:
         self.vectorstore = None
 
     def load_pdfs(self):
-        loader = DirectoryLoader(
+        loader = GenericLoader.from_filesystem(
             self.pdf_source_folder_path,
-            glob="**/*.md",
-            show_progress=True
+            glob="**/*",
+            suffixes=[".h", ".md"],
+            show_progress=True,
+            parser=LanguageParser()
         )
         loaded_pdfs = loader.load()
 
@@ -69,7 +59,7 @@ class MyKnowledgeBase:
     def convert_document_to_embeddings(
         self, chunked_docs, embedder
     ):
-        collection = client.get_or_create_collection(name="mydb", embedding_function=embedder)
+        collection = client.get_or_create_collection(name=CHROMADB_NAME, embedding_function=embedder)
         collection.add(
             documents=[chunked_docs]
         )
@@ -89,11 +79,27 @@ class MyKnowledgeBase:
     def initiate_document_injetion_pipeline(self):
         loaded_pdfs = self.load_pdfs()
         chunked_documents = self.split_documents(loaded_docs=loaded_pdfs)
-        print("=> PDF loading and chunking done.")
+        print("=> File loading and chunking done.")
 
         embeddings = HuggingFaceEmbeddings()
 
-        self.vectorstore = Chroma.from_documents(documents=chunked_documents, embedding=embeddings)
+        try:
+            print("=> Loading DB")
+            self.vectorstore = Chroma(
+                persist_directory=CHROMA_DB_DIRECTORY,
+                client=client,
+                embedding_function=embeddings
+                )
+        except Exception as e:
+            print(e)
+            print("=> DB not found, creating from new")
+            
+            self.vectorstore = Chroma.from_documents(
+                documents=chunked_documents, 
+                embedding=embeddings, 
+                persist_directory=CHROMA_DB_DIRECTORY,
+                client=client
+                )
 
         print("=> vector db initialised and created.")
         print("All done")

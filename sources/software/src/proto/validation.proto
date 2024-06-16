@@ -1,0 +1,41 @@
+syntax = "proto2";
+
+package TbotsProto;
+
+import "proto/geometry.proto";
+
+enum ValidationStatus
+{
+    PASSING = 0;
+    FAILING = 1;
+}
+
+enum ValidationType
+{
+    EVENTUALLY = 0;
+    ALWAYS     = 1;
+}
+
+// Visual representation of the Validation
+message ValidationGeometry
+{
+    repeated Polygon polygons = 1;
+    repeated Circle circles   = 2;
+    repeated Vector vectors   = 3;
+    repeated Segment segments = 4;
+    repeated Stadium stadiums = 5;
+}
+
+message ValidationProto
+{
+    required string failure_msg          = 1;
+    required ValidationGeometry geometry = 2;
+    required ValidationStatus status     = 3;
+}
+
+message ValidationProtoSet
+{
+    required string test_name               = 1;
+    required ValidationType validation_type = 2;
+    repeated ValidationProto validations    = 3;
+}
