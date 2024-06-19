@@ -2,7 +2,6 @@ import os
 from typing import Optional
 
 import chromadb
-from langchain_community.document_loaders import DirectoryLoader
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from constants import *

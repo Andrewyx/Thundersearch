@@ -8,8 +8,10 @@
 
 ARG PYTHON_VERSION=3.12.1
 FROM python:${PYTHON_VERSION}-slim as base
-RUN apt-get update 
+RUN apt-get update
+RUN apt-get -y install sudo
 RUN apt-get install build-essential -y
+RUN apt-get install nano -y
 
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -20,26 +22,13 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN useradd -ms /bin/bash appuser
+RUN useradd -ms /bin/bash appuser && echo "appuser:password" | chpasswd && adduser appuser sudo && chown -R appuser:appuser /app 
 
 # Create the necessary directories and set permissions
 RUN mkdir -p /app/.cache/huggingface/hub /app && chown -R appuser:appuser /app
 
 # Switch to the non-root user
 USER appuser
-
-# # Create a non-privileged user that the app will run under.
-# # See https://docs.docker.com/go/dockerfile-user-best-practices/
-# ARG UID=10001
-# RUN adduser \
-#     --disabled-password \
-#     --gecos "" \
-#     --home "/nonexistent" \
-#     --shell "/sbin/nologin" \
-#     --no-create-home \
-#     --uid "${UID}" \
-#     appuser
-
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
@@ -58,4 +47,4 @@ COPY . .
 # Expose the port that the application listens on.
 EXPOSE 8000
 
-CMD ["bash"]
+CMD /bin/bash
